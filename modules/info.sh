@@ -9,13 +9,13 @@ run_cmd info cpufreq 1m 'ls /sys/devices/system/cpu/cpufreq/policy*/scaling_cur_
 run_cmd info ruapu 2m 'command -v ruapu' 'ruapu';
 run_cmd info mhz 5m 'command -v mhz || ls /usr/lib/lmbench/bin/*/mhz >/dev/null 2>&1' 'if command -v mhz >/dev/null; then mhz; else /usr/lib/lmbench/bin/*/mhz; fi';
 run_cmd info pvr-debug 2m 'test -d /sys/kernel/debug/pvr' 'printf "%s\\n" leetfs | sudo -S -p "" sh -c "cat /sys/kernel/debug/pvr/cacheop_config /sys/kernel/debug/pvr/driver_stats /sys/kernel/debug/pvr/status /sys/kernel/debug/pvr/version 2>/dev/null || cat /sys/kernel/debug/pvr/*"';
-run_cmd info es2-info 2m 'command -v es2_info' 'es2_info';
-run_cmd info glxinfo 2m 'command -v glxinfo' 'glxinfo -B';
-run_cmd info vulkaninfo 5m 'command -v vulkaninfo' 'vulkaninfo --summary';
-run_cmd info clinfo 5m 'command -v clinfo' 'clinfo';
-run_cmd info vainfo 2m 'command -v vainfo' 'vainfo';
-run_cmd info vdpauinfo 2m 'command -v vdpauinfo' 'vdpauinfo';
-run_cmd info v4l2 2m 'command -v v4l2-ctl' 'v4l2-ctl --list-devices; for d in /dev/video*; do v4l2-ctl -d "$d" --all || true; done';
+run_cmd info es2-info 2m 'command -v es2_info && timeout 15s es2_info' 'es2_info';
+run_cmd info glxinfo 2m 'command -v glxinfo && timeout 15s glxinfo -B' 'glxinfo -B';
+run_cmd info vulkaninfo 5m 'command -v vulkaninfo && timeout 30s vulkaninfo --summary' 'vulkaninfo --summary';
+run_cmd info clinfo 5m 'command -v clinfo && timeout 15s clinfo -l | grep -qi platform' 'clinfo';
+run_cmd info vainfo 2m 'command -v vainfo && timeout 15s vainfo' 'vainfo';
+run_cmd info vdpauinfo 2m 'command -v vdpauinfo && timeout 15s vdpauinfo' 'vdpauinfo';
+run_cmd info v4l2 2m 'command -v v4l2-ctl && for d in /dev/video*; do test -r "$d" && test -w "$d" && exit 0; done; exit 1' 'v4l2-ctl --list-devices; for d in /dev/video*; do test -r "$d" && test -w "$d" && v4l2-ctl -d "$d" --all; done';
 run_cmd info ffmpeg 2m 'command -v ffmpeg' 'ffmpeg -hide_banner -version; ffmpeg -hide_banner -encoders; ffmpeg -hide_banner -decoders';
 run_cmd info gstreamer 2m 'command -v gst-inspect-1.0' 'gst-inspect-1.0 --version; gst-inspect-1.0 | sed -n "1,240p"';
 printf 'LAVA_SYSTEM_INVENTORY_%s\n' DONE

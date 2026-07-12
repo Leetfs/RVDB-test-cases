@@ -1,4 +1,4 @@
-METRIC_REPORT=/tmp/lava-k1-benchmark-metrics.md
+METRIC_REPORT="$WORK_DIR/metrics.md"
 printf '## 结构化性能指标\n\n| 测试项 | 指标 | 数值 | 单位 |\n|---|---|---:|---|\n' > "$METRIC_REPORT"
 
 metric_slug() {

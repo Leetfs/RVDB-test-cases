@@ -19,6 +19,8 @@ source "$PROFILE_FILE"
 SELECTED_MODULES="$(tr ' ' ',' <<<"$PROFILE_MODULES")"
 
 # shellcheck source=/dev/null
+source "$ROOT_DIR/lib/cleanup.sh"
+# shellcheck source=/dev/null
 source "$ROOT_DIR/lib/harness.sh"
 source "$ROOT_DIR/lib/metrics.sh"
 source "$ROOT_DIR/lib/spec.sh"

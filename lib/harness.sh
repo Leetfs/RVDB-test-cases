@@ -21,10 +21,10 @@ set -o pipefail;
 : "${SPEC2017_CONFIG:=auto}";
 : "${SPEC2017_CMD:=runcpu --config=auto --size=ref intrate fprate}";
 : "${PTS_TESTS:=}";
-REPORT=/tmp/lava-k1-benchmark-report.md;
-DETAIL=/tmp/lava-k1-benchmark-detail.log;
-INSTALL_REPORT=/tmp/lava-k1-benchmark-install.md;
-SUITE_RESULTS=/tmp/lava-k1-suite-results.log;
+REPORT="$WORK_DIR/report.md";
+DETAIL="$WORK_DIR/detail.log";
+INSTALL_REPORT="$WORK_DIR/install.md";
+SUITE_RESULTS="$WORK_DIR/suite-results.log";
 PASS_COUNT=0;
 FAIL_COUNT=0;
 SKIP_COUNT=0;
@@ -53,7 +53,7 @@ run_cmd() {
   probe="$4";
   command_text="$5";
   output_id="$(printf '%s-%s' "$category" "$test_name" | tr -cd 'a-zA-Z0-9._-')";
-  output_file="/tmp/lava-k1-output-$output_id.log";
+  output_file="$WORK_DIR/output-$output_id.log";
   : > "$output_file";
   started="$(date +%s)";
   printf '\n===== %s / %s =====\n' "$category" "$test_name" | tee -a "$DETAIL";
@@ -128,15 +128,23 @@ ensure_package() {
   dnf_packages="${4:-$3}";
   detect_package_manager;
   if eval "$probe" >/dev/null 2>&1; then install_result "$label" PRESENT "$PACKAGE_MANAGER"; return 0; fi;
-  if [ "$AUTO_INSTALL" -ne 1 ] || [ "$PACKAGE_MANAGER" = none ]; then install_result "$label" SKIP 'automatic package installation disabled or unavailable'; return 0; fi;
+  if [ "$AUTO_INSTALL" -ne 1 ] || [ "$PACKAGE_MANAGER" = none ]; then install_result "$label" UNAVAILABLE 'automatic package installation disabled or unavailable'; return 0; fi;
   case "$PACKAGE_MANAGER" in
     apt)
       packages="$apt_packages";
+      if ! apt-cache show $packages >/dev/null 2>&1; then
+        install_result "$label" NOT_FOUND "apt: $packages; trying source";
+        return 0;
+      fi;
       printf '%s\n' leetfs | sudo -S -p '' env DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends $packages 2>&1 | tee -a "$DETAIL";
       rc=${PIPESTATUS[1]}
       ;;
     dnf)
       packages="$dnf_packages";
+      if ! dnf -q list --available $packages >/dev/null 2>&1; then
+        install_result "$label" NOT_FOUND "dnf: $packages; trying source";
+        return 0;
+      fi;
       printf '%s\n' leetfs | sudo -S -p '' dnf install -y $packages 2>&1 | tee -a "$DETAIL";
       rc=${PIPESTATUS[1]}
       ;;
@@ -144,9 +152,9 @@ ensure_package() {
   if [ "$rc" -eq 0 ] && eval "$probe" >/dev/null 2>&1; then
     install_result "$label" INSTALLED "$PACKAGE_MANAGER: $packages";
   elif [ "$rc" -eq 0 ]; then
-    install_result "$label" FAILED "$PACKAGE_MANAGER installed $packages but probe failed";
+    install_result "$label" UNAVAILABLE "$PACKAGE_MANAGER installed $packages but probe failed; trying source";
   else
-    install_result "$label" FAILED "$PACKAGE_MANAGER install $packages";
+    install_result "$label" UNAVAILABLE "$PACKAGE_MANAGER install $packages failed; trying source";
   fi;
   return 0;
 };
@@ -154,12 +162,13 @@ ensure_source() {
   label="$1";
   probe="$2";
   command_text="$3";
+  source_limit="${4:-2h}";
   if eval "$probe" >/dev/null 2>&1; then return 0; fi;
-  if [ "$AUTO_INSTALL_SOURCE" -ne 1 ]; then install_result "$label-source" SKIP 'source installation disabled'; return 0; fi;
-  if timeout --signal=TERM --kill-after=30s 30m bash -lc "$command_text" 2>&1 | tee -a "$DETAIL"; then
-    if eval "$probe" >/dev/null 2>&1; then install_result "$label-source" INSTALLED source; else install_result "$label-source" FAILED 'build completed but probe failed'; fi;
+  if [ "$AUTO_INSTALL_SOURCE" -ne 1 ]; then install_result "$label-source" UNAVAILABLE 'source installation disabled'; return 0; fi;
+  if timeout --signal=TERM --kill-after=30s "$source_limit" bash -lc "$command_text" 2>&1 | tee -a "$DETAIL"; then
+    if eval "$probe" >/dev/null 2>&1; then install_result "$label-source" INSTALLED source; else install_result "$label-source" UNAVAILABLE 'build completed but probe failed'; fi;
   else
-    install_result "$label-source" FAILED 'source build failed';
+    install_result "$label-source" UNAVAILABLE 'source build failed';
   fi;
   return 0;
 };

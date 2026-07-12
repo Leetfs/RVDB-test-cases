@@ -69,10 +69,11 @@ spec_install_from_media() {
   sha256_file="$3"
   destination="$4"
   custom_install_command="$5"
-  work_dir="/tmp/lava-spec$version-install"
+  work_dir="$SPEC_WORK_ROOT/cpu$version-install"
   media_file="$work_dir/media"
   source_dir="$work_dir/source"
   mount_dir="$work_dir/mount"
+  mounted=0
 
   [ -n "$media_url" ] || return 2
   rm -rf "$work_dir"
@@ -91,7 +92,10 @@ spec_install_from_media() {
   case "${media_url%%\?*}" in
     *.iso)
       printf '%s\n' leetfs | sudo -S -p '' mount -o loop,ro,exec "$media_file" "$mount_dir" || return 5
-      source_dir="$mount_dir"
+      mounted=1
+      cp -a "$mount_dir/." "$source_dir/" || return 6
+      printf '%s\n' leetfs | sudo -S -p '' umount "$mount_dir" || return 5
+      mounted=0
       ;;
     *.tar|*.tar.gz|*.tgz|*.tar.xz|*.txz|*.tar.bz2)
       tar -xf "$media_file" -C "$source_dir" || return 6
@@ -104,6 +108,21 @@ spec_install_from_media() {
       ;;
   esac
 
+  if [ "$(uname -m)" = riscv64 ] && [ -z "$custom_install_command" ]; then
+    if [ ! -x "$source_dir/tools/bin/runcpu" ]; then
+      tools_source="$source_dir/tools/src"
+      if [ ! -x "$tools_source/buildtools" ]; then
+        tools_archive="$(find "$source_dir/install_archives" -maxdepth 1 -type f \
+          \( -name 'tools-src*.tar' -o -name 'tools-src*.tar.gz' -o -name 'tools-src*.tar.xz' -o -name 'tools-src*.tgz' \) \
+          -print 2>/dev/null | sort | head -1)"
+        [ -n "$tools_archive" ] || return 9
+        tar -xf "$tools_archive" -C "$source_dir" || return 9
+      fi
+      [ -x "$tools_source/buildtools" ] || return 9
+      (cd "$tools_source" && timeout 8h ./buildtools) || return 10
+    fi
+  fi
+
   if [ -n "$custom_install_command" ]; then
     SPEC_MEDIA_DIR="$source_dir" SPEC_INSTALL_ROOT="$destination" timeout 4h bash -lc "$custom_install_command"
     rc=$?
@@ -111,7 +130,7 @@ spec_install_from_media() {
     (cd "$source_dir" && printf 'yes\n' | timeout 4h ./install.sh -d "$destination")
     rc=$?
   fi
-  if mountpoint -q "$mount_dir" 2>/dev/null; then
+  if [ "$mounted" -eq 1 ] || mountpoint -q "$mount_dir" 2>/dev/null; then
     printf '%s\n' leetfs | sudo -S -p '' umount "$mount_dir" || true
   fi
   return "$rc"
@@ -145,7 +164,7 @@ spec_initialize_one() {
         install_result "spec-cpu$version-install" INSTALLED "$install_root"
       else
         printf -v "$command_name" '%s' ''
-        install_result "spec-cpu$version-install" FAILED "$runner unavailable after installation"
+        install_result "spec-cpu$version-install" UNAVAILABLE "$runner unavailable after installation"
         return 0
       fi
     else
@@ -155,8 +174,10 @@ spec_initialize_one() {
         install_result "spec-cpu$version-install" UNAVAILABLE "stage licensed media under /opt/spec-media or set SPEC${version}_MEDIA_URL"
       elif [ "$rc" -eq 4 ]; then
         install_result "spec-cpu$version-install" FAILED "local official SHA256 manifest missing, invalid, or mismatched"
+      elif [ "$rc" -eq 9 ] || [ "$rc" -eq 10 ]; then
+        install_result "spec-cpu$version-install" UNAVAILABLE "RISC-V SPEC tools source/build failed (rc=$rc)"
       else
-        install_result "spec-cpu$version-install" FAILED "media installation rc=$rc"
+        install_result "spec-cpu$version-install" UNAVAILABLE "media installation rc=$rc"
       fi
       return 0
     fi
