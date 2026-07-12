@@ -1,0 +1,4 @@
+run_cmd stability thermal-before 2m 'ls /sys/class/thermal/thermal_zone*/temp >/dev/null 2>&1' 'for z in /sys/class/thermal/thermal_zone*; do type=$(cat "$z/type" 2>/dev/null); temp=$(cat "$z/temp" 2>/dev/null); printf "%s type=%s temp=%s\n" "$z" "$type" "$temp"; done';
+if [ "$RUN_STRESS" -eq 1 ]; then run_cmd stability stress-ng 2h 'command -v stress-ng' "stress-ng --cpu 0 --vm 2 --vm-bytes 70% --iomix 1 --verify --metrics-brief --timeout ${STRESS_SECONDS}s"; else record_skip stability stress-ng 'set RUN_STRESS=1 after confirming cooling and power'; fi;
+run_cmd stability thermal-after 2m 'ls /sys/class/thermal/thermal_zone*/temp >/dev/null 2>&1' 'for z in /sys/class/thermal/thermal_zone*; do type=$(cat "$z/type" 2>/dev/null); temp=$(cat "$z/temp" 2>/dev/null); printf "%s type=%s temp=%s\n" "$z" "$type" "$temp"; done';
+printf 'LAVA_STABILITY_%s\n' DONE

@@ -1,0 +1,13 @@
+metadata:
+  format: Lava-Test Test Definition 1.0
+  name: k1-full-benchmark
+  description: 在 K1 开发板上运行全部模块化测试
+  os:
+    - debian
+  scope:
+    - performance
+    - functional
+
+run:
+  steps:
+    - bash ../scripts/run-profile.sh full

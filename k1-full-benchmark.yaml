@@ -1,0 +1,66 @@
+device_type: k1
+job_name: k1-01 full modular benchmark
+priority: medium
+visibility: public
+
+timeouts:
+  job:
+    hours: 24
+  action:
+    hours: 24
+  connection:
+    hours: 24
+
+actions:
+  - boot:
+      method: minimal
+      connection: serial
+      ignore_kernel_messages: true
+      parameters:
+        kernel-start-message: ""
+      prompts:
+        - "leetfs@k1:.*\\$"
+
+  - test:
+      timeout:
+        hours: 24
+      interactive:
+        - name: k1-full-benchmark-runner
+          prompts:
+            - "leetfs@k1:.*\\$"
+          script:
+            - name: clean-reboot
+              command: "echo leetfs | sudo -S -p '' /sbin/reboot"
+              successes:
+                - message: "/sbin/reboot"
+              wait_for_prompt: false
+
+            - name: reboot-command-accepted
+              command: null
+
+            - name: wait-login-after-reboot
+              command: null
+              successes:
+                - message: "k1 login:"
+              wait_for_prompt: false
+
+            - name: login-leetfs
+              command: "leetfs"
+              successes:
+                - message: "Password:|密码："
+              wait_for_prompt: false
+
+            - name: password-leetfs
+              command: "leetfs"
+
+            - name: runner-shell-restored
+              command: null
+
+  - test:
+      timeout:
+        hours: 24
+      definitions:
+        - repository: https://github.com/Leetfs/RVDB-test-cases.git
+          from: git
+          path: lava/k1-full.yaml
+          name: k1-full-results

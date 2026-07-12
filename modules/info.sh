@@ -1,0 +1,21 @@
+run_cmd info uname 1m 'command -v uname' 'uname -a';
+run_cmd info os-release 1m 'test -r /etc/os-release' 'cat /etc/os-release';
+run_cmd info lscpu 1m 'command -v lscpu' 'lscpu';
+run_cmd info cpuinfo 1m 'test -r /proc/cpuinfo' 'cat /proc/cpuinfo';
+run_cmd info device-tree-model 1m 'test -r /sys/firmware/devicetree/base/model' 'tr "\\0" "\\n" < /sys/firmware/devicetree/base/model';
+run_cmd info riscv-isa 1m 'ls /sys/firmware/devicetree/base/cpus/cpu@*/riscv,isa >/dev/null 2>&1' 'for f in /sys/firmware/devicetree/base/cpus/cpu@*/riscv,isa; do echo "$f"; tr "\\0" "\\n" < "$f"; done';
+run_cmd info mmu-type 1m 'ls /sys/firmware/devicetree/base/cpus/cpu@*/mmu-type >/dev/null 2>&1' 'for f in /sys/firmware/devicetree/base/cpus/cpu@*/mmu-type; do echo "$f"; tr "\\0" "\\n" < "$f"; done';
+run_cmd info cpufreq 1m 'ls /sys/devices/system/cpu/cpufreq/policy*/scaling_cur_freq >/dev/null 2>&1' 'for p in /sys/devices/system/cpu/cpufreq/policy*; do printf "%s " "$p"; cat "$p/scaling_cur_freq" "$p/scaling_min_freq" "$p/scaling_max_freq" 2>/dev/null | xargs; done';
+run_cmd info ruapu 2m 'command -v ruapu' 'ruapu';
+run_cmd info mhz 5m 'command -v mhz || ls /usr/lib/lmbench/bin/*/mhz >/dev/null 2>&1' 'if command -v mhz >/dev/null; then mhz; else /usr/lib/lmbench/bin/*/mhz; fi';
+run_cmd info pvr-debug 2m 'test -d /sys/kernel/debug/pvr' 'printf "%s\\n" leetfs | sudo -S -p "" sh -c "cat /sys/kernel/debug/pvr/cacheop_config /sys/kernel/debug/pvr/driver_stats /sys/kernel/debug/pvr/status /sys/kernel/debug/pvr/version 2>/dev/null || cat /sys/kernel/debug/pvr/*"';
+run_cmd info es2-info 2m 'command -v es2_info' 'es2_info';
+run_cmd info glxinfo 2m 'command -v glxinfo' 'glxinfo -B';
+run_cmd info vulkaninfo 5m 'command -v vulkaninfo' 'vulkaninfo --summary';
+run_cmd info clinfo 5m 'command -v clinfo' 'clinfo';
+run_cmd info vainfo 2m 'command -v vainfo' 'vainfo';
+run_cmd info vdpauinfo 2m 'command -v vdpauinfo' 'vdpauinfo';
+run_cmd info v4l2 2m 'command -v v4l2-ctl' 'v4l2-ctl --list-devices; for d in /dev/video*; do v4l2-ctl -d "$d" --all || true; done';
+run_cmd info ffmpeg 2m 'command -v ffmpeg' 'ffmpeg -hide_banner -version; ffmpeg -hide_banner -encoders; ffmpeg -hide_banner -decoders';
+run_cmd info gstreamer 2m 'command -v gst-inspect-1.0' 'gst-inspect-1.0 --version; gst-inspect-1.0 | sed -n "1,240p"';
+printf 'LAVA_SYSTEM_INVENTORY_%s\n' DONE
