@@ -12,6 +12,8 @@ timeouts:
     hours: 24
 
 actions:
+  - deploy:
+      to: overlay
   - boot:
       method: minimal
       connection: serial
@@ -20,6 +22,9 @@ actions:
         kernel-start-message: ""
       prompts:
         - "leetfs@k1:.*\\$"
+      transfer_overlay:
+        download_command: wget
+        unpack_command: tar -C / -xzf
 
   - test:
       timeout:
@@ -52,9 +57,6 @@ actions:
 
             - name: password-leetfs
               command: "leetfs"
-
-            - name: runner-shell-restored
-              command: null
 
   - test:
       timeout:
