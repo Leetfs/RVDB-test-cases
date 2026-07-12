@@ -23,7 +23,7 @@ actions:
         - "leetfs@k1:.*\\$"
       transfer_overlay:
         download_command: wget
-        unpack_command: tar -C / -xzf
+        unpack_command: tar -C /home/leetfs -xzf
 
   - test:
       timeout:

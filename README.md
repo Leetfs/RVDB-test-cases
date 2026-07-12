@@ -33,8 +33,9 @@ dispatcher 侧配置凭据，不要把访问令牌写入 Job YAML。
 
 ## 运行方法
 
-在 LAVA UI 中提交 `k1-full-benchmark.yaml`。Job 会重启开发板，以 `leetfs`
-用户登录，然后由 LAVA 获取并执行 `lava/k1-full.yaml`。测试定义最终运行：
+在 LAVA UI 中提交 `k1-full-benchmark.yaml`。Job 会连接开发板当前已经运行的
+`leetfs` shell，不执行前置重启，然后由 LAVA 获取并执行
+`lava/k1-full.yaml`。测试定义最终运行：
 
 ```bash
 bash ../scripts/run-profile.sh full

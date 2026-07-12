@@ -10,4 +10,4 @@ metadata:
 
 run:
   steps:
-    - bash ../scripts/run-profile.sh full
+    - bash ./scripts/run-profile.sh full
