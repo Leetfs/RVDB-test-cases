@@ -14,13 +14,22 @@ timeouts:
 actions:
   - deploy:
       to: overlay
+
   - boot:
       method: minimal
       ignore_kernel_messages: true
       parameters:
         kernel-start-message: ""
+
+      auto_login:
+        login_prompt: "k1 login:"
+        username: leetfs
+        password_prompt: "Password:|密码："
+        password: leetfs
+
       prompts:
         - "leetfs@k1:.*\\$"
+
       transfer_overlay:
         download_command: wget
         unpack_command: tar -C /home/leetfs -xzf
