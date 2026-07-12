@@ -16,7 +16,6 @@ actions:
       to: overlay
   - boot:
       method: minimal
-      connection: serial
       ignore_kernel_messages: true
       parameters:
         kernel-start-message: ""
