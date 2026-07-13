@@ -1,0 +1,12 @@
+metadata:
+  format: Lava-Test Test Definition 1.0
+  name: k1-pts-benchmark
+  description: 在 K1 开发板上运行 Phoronix Test Suite 常规测试
+  os:
+    - debian
+  scope:
+    - performance
+
+run:
+  steps:
+    - bash ./scripts/run-profile.sh pts

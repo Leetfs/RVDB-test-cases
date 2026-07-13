@@ -1,0 +1,47 @@
+device_type: k1
+job_name: k1-01 PTS benchmark
+priority: medium
+visibility: public
+
+context:
+  lava_test_results_dir: /home/leetfs/lava-%s
+
+timeouts:
+  job:
+    hours: 24
+  action:
+    hours: 24
+  connection:
+    hours: 24
+
+actions:
+  - deploy:
+      to: overlay
+
+  - boot:
+      method: minimal
+      ignore_kernel_messages: true
+      parameters:
+        kernel-start-message: ""
+
+      auto_login:
+        login_prompt: "k1 login:"
+        username: leetfs
+        password_prompt: "Password:|密码："
+        password: leetfs
+
+      prompts:
+        - "leetfs@k1:.*\\$"
+
+      transfer_overlay:
+        download_command: wget
+        unpack_command: tar -C /home/leetfs -xzf
+
+  - test:
+      timeout:
+        hours: 24
+      definitions:
+        - repository: https://github.com/Leetfs/RVDB-test-cases.git
+          from: git
+          path: lava/k1-pts.yaml
+          name: k1-pts-results

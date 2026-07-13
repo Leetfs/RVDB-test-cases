@@ -202,6 +202,7 @@ spec_initialize_one() {
 
 initialize_spec() {
   [ "$RUN_SPEC" -eq 1 ] || return 0
+  has_module cpu || return 0
   if [ "$SPEC_AUTO_INIT" -ne 1 ]; then
     install_result spec-auto-init SKIP 'SPEC_AUTO_INIT=0; using configured commands unchanged'
     return 0

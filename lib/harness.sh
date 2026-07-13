@@ -20,7 +20,7 @@ set -o pipefail;
 : "${SPEC2017_INSTALL_CMD:=}";
 : "${SPEC2017_CONFIG:=auto}";
 : "${SPEC2017_CMD:=runcpu --config=auto --size=ref intrate fprate}";
-: "${PTS_TESTS:=}";
+: "${PTS_TESTS:=pts/coremark pts/compress-7zip pts/openssl pts/stockfish pts/sysbench pts/stream pts/tinymembench pts/ramspeed pts/fio pts/iozone pts/sqlite}";
 REPORT="$WORK_DIR/report.md";
 DETAIL="$WORK_DIR/detail.log";
 INSTALL_REPORT="$WORK_DIR/install.md";

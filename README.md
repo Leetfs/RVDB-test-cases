@@ -8,6 +8,7 @@ Definition 1.0 规范执行全部测试模块。
 ## 目录结构
 
 - `k1-full-benchmark.yaml`：提交到 LAVA UI 的主 Job。
+- `k1-pts-benchmark.yaml`：只运行 PTS 常规测试的独立 Job。
 - `lava/k1-full.yaml`：由 LAVA 从 Git 获取并执行的测试定义。
 - `config/defaults.env`：自动安装、测试开关和运行参数。
 - `config/cpu2017-1_0_5.iso.sha256`：SPEC CPU 2017 v1.0.5 官方哈希。
@@ -44,7 +45,7 @@ bash ../scripts/run-profile.sh full
 `full` 方案依次执行：
 
 ```text
-info cpu memory gpu combined storage virt-kernel stability
+info cpu memory gpu combined pts storage virt-kernel stability
 ```
 
 也可以在仓库检出目录中手动执行某个方案：
@@ -74,6 +75,28 @@ bash scripts/run-profile.sh cpu
 
 `sbc-bench` 使用 root 和 `MODE=unattended` 运行，不读取“建议重启”的交互确认，
 因此适合无人值守 Job。
+
+## Phoronix Test Suite
+
+`pts` 是独立模块。它默认覆盖 CPU、内存、压缩、加密、系统、存储和数据库等
+常规场景：
+
+```env
+PTS_TESTS='pts/coremark pts/compress-7zip pts/openssl pts/stockfish pts/sysbench pts/stream pts/tinymembench pts/ramspeed pts/fio pts/iozone pts/sqlite'
+```
+
+每个 profile 分别通过 `default-benchmark` 非交互运行，使用 profile 的默认测试
+配置，并设置 `FORCE_TIMES_TO_RUN=1` 控制单次 Job 的耗时。每项测试会生成独立的
+LAVA testcase，例如 `pts-coremark`、`pts-fio`，一个 profile 失败不会阻止后续项。
+
+PTS 下载、编译、安装和结果目录均位于当前 Job 的临时工作目录，完成、失败或
+取消后都会清理。可在 `config/defaults.env` 中覆盖 `PTS_TESTS`；设置
+`RUN_PTS=0` 可关闭。只运行 PTS 时，可在 LAVA UI 提交
+`k1-pts-benchmark.yaml`，或在仓库目录手动执行：
+
+```bash
+bash scripts/run-profile.sh pts
+```
 
 ## 结果上报
 

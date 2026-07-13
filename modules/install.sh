@@ -92,11 +92,13 @@ if has_module combined; then
   if ! has_module cpu; then build_unixbench; fi
   if ! has_module memory; then build_lmbench; fi
   ensure_source sbc-bench 'command -v sbc-bench' 'git clone --depth 1 https://github.com/ThomasKaiser/sbc-bench.git "$SOURCE_ROOT/sbc-bench" && printf "%s\n" leetfs | sudo -S -p "" install -m 0755 "$SOURCE_ROOT/sbc-bench/sbc-bench.sh" /usr/local/bin/sbc-bench'
-  if [ "$RUN_PTS" -eq 1 ] && [ -n "$PTS_TESTS" ]; then
-    ensure_package php 'command -v php' php-cli php-cli
-    ensure_package phoronix-test-suite 'command -v phoronix-test-suite' phoronix-test-suite phoronix-test-suite
-    ensure_source phoronix-test-suite 'command -v phoronix-test-suite' 'git clone --depth 1 https://github.com/phoronix-test-suite/phoronix-test-suite.git "$SOURCE_ROOT/phoronix-test-suite" && printf "%s\n" leetfs | sudo -S -p "" mkdir -p /opt/phoronix-test-suite && printf "%s\n" leetfs | sudo -S -p "" cp -a "$SOURCE_ROOT/phoronix-test-suite/." /opt/phoronix-test-suite/ && printf "%s\n" leetfs | sudo -S -p "" ln -sf /opt/phoronix-test-suite/phoronix-test-suite /usr/local/bin/phoronix-test-suite'
-  fi
+fi
+
+if has_module pts && [ "$RUN_PTS" -eq 1 ] && [ -n "$PTS_TESTS" ]; then
+  ensure_package php 'command -v php' php-cli php-cli
+  ensure_package pts-build-deps 'test -f /usr/include/libaio.h && test -f /usr/include/sqlite3.h && test -f /usr/include/zlib.h' 'libaio-dev libsqlite3-dev zlib1g-dev' 'libaio-devel sqlite-devel zlib-devel'
+  ensure_package phoronix-test-suite 'command -v phoronix-test-suite' phoronix-test-suite phoronix-test-suite
+  ensure_source phoronix-test-suite 'command -v phoronix-test-suite' 'git clone --depth 1 https://github.com/phoronix-test-suite/phoronix-test-suite.git "$SOURCE_ROOT/phoronix-test-suite" && printf "%s\n" leetfs | sudo -S -p "" mkdir -p /opt/phoronix-test-suite && printf "%s\n" leetfs | sudo -S -p "" cp -a "$SOURCE_ROOT/phoronix-test-suite/." /opt/phoronix-test-suite/ && printf "%s\n" leetfs | sudo -S -p "" ln -sf /opt/phoronix-test-suite/phoronix-test-suite /usr/local/bin/phoronix-test-suite'
 fi
 
 if has_module storage; then
