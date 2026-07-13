@@ -14,7 +14,7 @@ build_lmbench() {
   ensure_source lmbench 'find /opt/lmbench -name lat_syscall -type f -perm -111 -print -quit 2>/dev/null | grep -q .' 'git clone --depth 1 https://github.com/intel/lmbench.git "$SOURCE_ROOT/lmbench" && make -C "$SOURCE_ROOT/lmbench/src" -j "$(nproc)" CPPFLAGS="-I/usr/include/tirpc" LDLIBS="-ltirpc" && printf "%s\n" leetfs | sudo -S -p "" mkdir -p /opt/lmbench && printf "%s\n" leetfs | sudo -S -p "" cp -a "$SOURCE_ROOT/lmbench/." /opt/lmbench/'
 }
 
-if [ "$RUN_SPEC" -eq 1 ]; then
+if [ "$RUN_SPEC" -eq 1 ] && has_module cpu; then
   ensure_package download-tools 'command -v curl || command -v wget' curl curl
   ensure_package archive-tools 'command -v tar && command -v xz' 'tar xz-utils' 'tar xz'
   ensure_package mount-tools 'command -v mount' mount util-linux
