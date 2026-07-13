@@ -96,7 +96,10 @@ fi
 
 if has_module pts && [ "$RUN_PTS" -eq 1 ] && [ -n "$PTS_TESTS" ]; then
   ensure_package php 'command -v php' php-cli php-cli
-  ensure_package pts-build-deps 'test -f /usr/include/libaio.h && test -f /usr/include/sqlite3.h && test -f /usr/include/zlib.h' 'libaio-dev libsqlite3-dev zlib1g-dev' 'libaio-devel sqlite-devel zlib-devel'
+  ensure_package pts-runtime-deps 'command -v python3 && command -v perl && command -v unzip && command -v xz' 'python3 python3-venv python3-pip perl unzip xz-utils' 'python3 python3-pip perl unzip xz'
+  ensure_package pts-build-tools 'command -v cmake && command -v meson && command -v ninja && command -v autoreconf && command -v bison && command -v flex' 'cmake meson ninja-build pkg-config autoconf automake libtool bison flex' 'cmake meson ninja-build pkgconf autoconf automake libtool bison flex'
+  ensure_package pts-dev-core 'test -f /usr/include/libaio.h && test -f /usr/include/sqlite3.h && test -f /usr/include/zlib.h && test -f /usr/include/openssl/ssl.h && test -f /usr/include/libxml2/libxml/parser.h' 'libaio-dev libsqlite3-dev zlib1g-dev libssl-dev libxml2-dev' 'libaio-devel sqlite-devel zlib-devel openssl-devel libxml2-devel'
+  ensure_package pts-dev-services 'test -f /usr/include/numa.h && test -f /usr/include/event2/event.h && test -f /usr/include/pcre2.h && find /usr/include -path "*/curl/curl.h" -print -quit | grep -q .' 'libcurl4-openssl-dev libnuma-dev libevent-dev libpcre2-dev' 'libcurl-devel numactl-devel libevent-devel pcre2-devel'
   ensure_package phoronix-test-suite 'command -v phoronix-test-suite' phoronix-test-suite phoronix-test-suite
   ensure_source phoronix-test-suite 'command -v phoronix-test-suite' 'git clone --depth 1 https://github.com/phoronix-test-suite/phoronix-test-suite.git "$SOURCE_ROOT/phoronix-test-suite" && printf "%s\n" leetfs | sudo -S -p "" mkdir -p /opt/phoronix-test-suite && printf "%s\n" leetfs | sudo -S -p "" cp -a "$SOURCE_ROOT/phoronix-test-suite/." /opt/phoronix-test-suite/ && printf "%s\n" leetfs | sudo -S -p "" ln -sf /opt/phoronix-test-suite/phoronix-test-suite /usr/local/bin/phoronix-test-suite'
 fi

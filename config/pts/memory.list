@@ -1,0 +1,9 @@
+# profile tier
+pts/stream smoke
+pts/tinymembench smoke
+pts/ramspeed smoke
+pts/cachebench standard
+pts/pmbench standard
+pts/t-test1 extended
+pts/core-latency extended
+pts/stream-dynamic extended

@@ -1,0 +1,8 @@
+# profile tier
+pts/build-linux-kernel standard
+pts/unpack-linux standard
+pts/build-llvm extended
+pts/build-mesa extended
+pts/build-mplayer extended
+pts/build-php extended
+pts/build-python extended

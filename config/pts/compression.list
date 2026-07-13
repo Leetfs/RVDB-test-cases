@@ -1,0 +1,7 @@
+# profile tier
+pts/compress-7zip smoke
+pts/compress-gzip standard
+pts/compress-lz4 standard
+pts/compress-pbzip2 standard
+pts/compress-xz standard
+pts/compress-zstd standard

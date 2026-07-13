@@ -1,0 +1,5 @@
+# profile tier
+pts/perf-bench standard
+pts/schbench standard
+pts/ipc-benchmark standard
+pts/stress-ng extended

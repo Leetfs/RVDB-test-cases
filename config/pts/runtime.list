@@ -1,0 +1,7 @@
+# profile tier
+pts/pyperformance standard
+pts/phpbench standard
+pts/go-benchmark standard
+pts/perl-benchmark standard
+pts/rust-prime extended
+pts/rust-mandel extended

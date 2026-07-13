@@ -24,6 +24,8 @@ source "$ROOT_DIR/lib/cleanup.sh"
 source "$ROOT_DIR/lib/harness.sh"
 source "$ROOT_DIR/lib/metrics.sh"
 source "$ROOT_DIR/lib/spec.sh"
+source "$ROOT_DIR/lib/pts.sh"
+resolve_pts_tests || exit $?
 source "$ROOT_DIR/modules/install.sh"
 initialize_spec
 

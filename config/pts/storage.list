@@ -1,0 +1,10 @@
+# profile tier
+pts/fio smoke
+pts/iozone smoke
+pts/sqlite smoke
+pts/fs-mark standard
+pts/postmark standard
+pts/dbench standard
+pts/compilebench standard
+pts/pjdfstest extended
+pts/ior extended

@@ -1,0 +1,7 @@
+# profile tier
+pts/openssl smoke
+pts/gnupg standard
+pts/gcrypt standard
+pts/cryptopp standard
+pts/smhasher extended
+pts/securemark extended

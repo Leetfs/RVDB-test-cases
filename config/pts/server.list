@@ -1,0 +1,8 @@
+# profile tier
+pts/redis standard
+pts/nginx standard
+pts/pgbench standard
+pts/sqlite-speedtest standard
+pts/apache extended
+pts/memcached extended
+pts/clickhouse extended

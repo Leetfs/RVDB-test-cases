@@ -1,0 +1,13 @@
+# profile tier
+pts/coremark smoke
+pts/stockfish smoke
+pts/sysbench smoke
+pts/c-ray standard
+pts/scimark2 standard
+pts/fhourstones standard
+pts/primesieve standard
+pts/polybench-c standard
+pts/gmpbench standard
+pts/npb extended
+pts/xsbench extended
+pts/minife extended

@@ -11,6 +11,7 @@ Definition 1.0 规范执行全部测试模块。
 - `k1-pts-benchmark.yaml`：只运行 PTS 常规测试的独立 Job。
 - `lava/k1-full.yaml`：由 LAVA 从 Git 获取并执行的测试定义。
 - `config/defaults.env`：自动安装、测试开关和运行参数。
+- `config/pts/*.list`：按领域维护的 PTS 开源测试目录及档位。
 - `config/cpu2017-1_0_5.iso.sha256`：SPEC CPU 2017 v1.0.5 官方哈希。
 - `profiles/*.env`：各测试方案包含的模块及执行顺序。
 - `scripts/run-profile.sh`：测试方案运行入口。
@@ -78,25 +79,56 @@ bash scripts/run-profile.sh cpu
 
 ## Phoronix Test Suite
 
-`pts` 是独立模块。它默认覆盖 CPU、内存、压缩、加密、系统、存储和数据库等
-常规场景：
+`pts` 是独立模块，面向多架构 Linux 发行版验证。测试目录按 CPU、密码学、
+压缩、内存、存储、工具链、语言运行时、多媒体、服务端、内核和网络共 11 个
+领域拆分，当前共收录 72 个开源 profile。
+
+通过 `PTS_TIER` 选择运行深度：
+
+- `smoke`：11 项，适合每次构建后的快速冒烟测试。
+- `standard`：49 项，默认值，覆盖常见发行版性能与功能场景。
+- `extended`：72 项，增加 LLVM/Mesa/PHP/Python 编译、HPC、数据库和网络等长测。
+
+默认配置为：
 
 ```env
-PTS_TESTS='pts/coremark pts/compress-7zip pts/openssl pts/stockfish pts/sysbench pts/stream pts/tinymembench pts/ramspeed pts/fio pts/iozone pts/sqlite'
+PTS_TIER=standard
+PTS_GROUPS='cpu crypto compression memory storage toolchain runtime multimedia server kernel network'
+PTS_TESTS=
+PTS_TIMES_TO_RUN=1
+PTS_TEST_TIMEOUT=4h
 ```
 
 每个 profile 分别通过 `default-benchmark` 非交互运行，使用 profile 的默认测试
-配置，并设置 `FORCE_TIMES_TO_RUN=1` 控制单次 Job 的耗时。每项测试会生成独立的
-LAVA testcase，例如 `pts-coremark`、`pts-fio`，一个 profile 失败不会阻止后续项。
+配置。每项测试会生成独立的 LAVA testcase，例如 `pts-coremark`、`pts-fio`，
+一个 profile 失败不会阻止后续项。PTS 声明当前 OS 或 CPU 架构不支持的测试，
+以及当前仓库不存在的 profile，会记录为 `skip`，不会制造无意义的 `fail`。
+
+profile 完成后会通过 PTS 官方 `result-file-to-json` 导出结构化结果。脚本读取其中
+的 `value` 和 `scale`，将每种测试配置的实际性能值及单位作为额外 testcase
+measurement 写入同一个 LAVA suite。完整控制台输出保留在 Job 日志中，JSON
+原文位于本次 Job 临时目录并在解析完成后随其它测试文件统一清理。
 
 PTS 下载、编译、安装和结果目录均位于当前 Job 的临时工作目录，完成、失败或
-取消后都会清理。可在 `config/defaults.env` 中覆盖 `PTS_TESTS`；设置
-`RUN_PTS=0` 可关闭。只运行 PTS 时，可在 LAVA UI 提交
+取消后都会清理。`PTS_TESTS` 非空时会覆盖目录选择，可用于精确指定一组 profile；
+设置 `RUN_PTS=0` 可关闭。只运行 PTS 时，可在 LAVA UI 提交
 `k1-pts-benchmark.yaml`，或在仓库目录手动执行：
 
 ```bash
 bash scripts/run-profile.sh pts
 ```
+
+例如只跑快速测试、只跑内核与工具链，或执行完整目录：
+
+```bash
+PTS_TIER=smoke bash scripts/run-profile.sh pts
+PTS_GROUPS='kernel toolchain' bash scripts/run-profile.sh pts
+PTS_TIER=extended bash scripts/run-profile.sh pts
+```
+
+目录文件每行由 `profile tier` 组成。新增项目时优先选择源码开放、可自动下载、
+可非交互执行且支持多架构的 profile；依赖专有介质、外部服务或特定硬件的项目
+应放入 `extended`，并保留明确的探测与 `skip` 行为。
 
 ## 结果上报
 

@@ -1,0 +1,4 @@
+# profile tier
+pts/network-loopback standard
+pts/sockperf standard
+pts/iperf extended
