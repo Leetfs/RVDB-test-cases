@@ -64,7 +64,7 @@ bash scripts/run-profile.sh cpu
 直接终止时兜底删除源码树、日志、SPEC 临时介质和存储测试文件。下次启动还会
 先清理历史版本遗留的 `/tmp/lava-*` 测试文件。
 
-主 Job 通过 LAVA `context` 将测试 overlay 和结果目录放在
+主 Job 通过 LAVA `context.lava_test_results_dir` 将测试 overlay 和结果目录放在
 `/home/leetfs/lava-<job-id>`，与清理守护进程使用同一路径，不会在根目录创建
 `/lava-<job-id>`。
 
