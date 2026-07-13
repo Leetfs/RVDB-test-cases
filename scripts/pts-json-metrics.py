@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 import json
+import os
 import re
 import sys
 
@@ -13,6 +14,8 @@ def main():
         return 2
 
     path, profile = sys.argv[1:]
+    if not os.path.isfile(path) or os.path.getsize(path) == 0:
+        return 1
     with open(path, encoding="utf-8") as stream:
         document = json.load(stream)
 
