@@ -104,8 +104,17 @@ run_cmd() {
     SKIP_COUNT=$((SKIP_COUNT + 1));
     printf 'SKIP: prerequisite unavailable\n' | tee -a "$DETAIL";
   else
-    timeout --signal=TERM --kill-after=30s "$limit" bash -lc "$command_text" 2>&1 | tee -a "$DETAIL" "$output_file";
-    rc=${PIPESTATUS[0]};
+    output_fifo="$WORK_DIR/output-$output_id.pipe";
+    mkfifo "$output_fifo";
+    tee -a "$DETAIL" "$output_file" < "$output_fifo" &
+    output_pid=$!;
+    setsid --wait timeout --signal=TERM --kill-after=30s "$limit" bash -lc "$command_text" > "$output_fifo" 2>&1 &
+    active_pid=$!;
+    printf '%s\n' "$active_pid" > "$WORK_DIR/active.pid";
+    if wait "$active_pid"; then rc=0; else rc=$?; fi;
+    wait "$output_pid" || true;
+    rm -f "$WORK_DIR/active.pid";
+    rm -f "$output_fifo";
     if [ "$rc" -eq 0 ]; then
       status=PASS;
       PASS_COUNT=$((PASS_COUNT + 1));

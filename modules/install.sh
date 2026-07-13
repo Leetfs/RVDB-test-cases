@@ -2,6 +2,7 @@ update_package_index
 ensure_package build-essential 'command -v gcc && command -v make' build-essential 'gcc gcc-c++ make'
 ensure_package git 'command -v git' git git
 ensure_package openssl 'command -v openssl' openssl openssl
+ensure_package process-control 'command -v setsid && command -v timeout' 'util-linux coreutils' 'util-linux coreutils'
 
 build_unixbench() {
   ensure_source unixbench 'test -x /opt/UnixBench/Run' 'git clone --depth 1 https://github.com/kdlucas/byte-unixbench.git "$SOURCE_ROOT/unixbench" && make -C "$SOURCE_ROOT/unixbench/UnixBench" -j "$(nproc)" && printf "%s\n" leetfs | sudo -S -p "" mkdir -p /opt/UnixBench && printf "%s\n" leetfs | sudo -S -p "" cp -a "$SOURCE_ROOT/unixbench/UnixBench/." /opt/UnixBench/'

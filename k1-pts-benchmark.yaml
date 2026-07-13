@@ -24,12 +24,6 @@ actions:
       parameters:
         kernel-start-message: ""
 
-      auto_login:
-        login_prompt: "k1 login:"
-        username: leetfs
-        password_prompt: "Password:|密码："
-        password: leetfs
-
       prompts:
         - "leetfs@k1:.*\\$"
 

@@ -37,8 +37,8 @@ dispatcher 侧配置凭据，不要把访问令牌写入 Job YAML。
 
 ## 运行方法
 
-在 LAVA UI 中提交 `k1-full-benchmark.yaml`。Job 连接开发板当前 shell，必要时
-自动登录 `leetfs`，但不会执行前置重启。随后 LAVA 获取并执行
+在 LAVA UI 中提交 `k1-full-benchmark.yaml`。Job 直接复用开发板当前已登录的
+`leetfs` shell，只匹配 `leetfs@k1:.*\\$`，不会发送用户名、密码或执行前置重启。随后 LAVA 获取并执行
 `lava/k1-full.yaml`。测试定义最终运行：
 
 ```bash
@@ -66,7 +66,8 @@ bash scripts/run-profile.sh cpu
 
 每次运行使用独立的 `/tmp/lava-k1-benchmark-<job-id>` 工作目录。正常完成、
 测试失败、超时或人工取消都会触发清理；独立清理守护进程会在测试 shell 被
-直接终止时兜底删除源码树、日志、SPEC 临时介质和存储测试文件。下次启动还会
+直接终止时先结束当前测试的独立进程组，再兜底删除源码树、日志、SPEC 临时介质
+和存储测试文件。下次启动还会
 先清理历史版本遗留的 `/tmp/lava-*` 测试文件。
 
 主 Job 通过 LAVA `context.lava_test_results_dir` 将测试 overlay 和结果目录放在

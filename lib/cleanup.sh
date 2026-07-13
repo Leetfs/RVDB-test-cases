@@ -7,6 +7,15 @@ STORAGE_IOZONE_FILE="$WORK_DIR/iozone.bin"
 OVERLAY_DIR="/home/leetfs/lava-$RUN_ID"
 CLEANUP_DONE=0
 
+stop_active_process() {
+  [ -s "$WORK_DIR/active.pid" ] || return 0
+  active_pid="$(cat "$WORK_DIR/active.pid" 2>/dev/null || true)"
+  case "$active_pid" in *[!0-9]*|'') return 0 ;; esac
+  printf '%s\n' leetfs | sudo -S -p '' kill -TERM -- "-$active_pid" 2>/dev/null || true
+  sleep 2
+  printf '%s\n' leetfs | sudo -S -p '' kill -KILL -- "-$active_pid" 2>/dev/null || true
+}
+
 cleanup_path() {
   path="$1"
   [ -e "$path" ] || return 0
@@ -17,6 +26,7 @@ cleanup_path() {
 cleanup_artifacts() {
   [ "$CLEANUP_DONE" -eq 0 ] || return 0
   CLEANUP_DONE=1
+  stop_active_process
   if [ -d "$SPEC_WORK_ROOT" ]; then
     find "$SPEC_WORK_ROOT" -type d -name mount -print 2>/dev/null | while read -r mount_dir; do
       if mountpoint -q "$mount_dir" 2>/dev/null; then
@@ -67,6 +77,17 @@ trap 'handle_cleanup_signal 143' TERM
 nohup setsid bash -c '
   parent="$1"; work_dir="$2"; overlay_dir="$3"
   while kill -0 "$parent" 2>/dev/null; do sleep 2; done
+  if [ -s "$work_dir/active.pid" ]; then
+    active_pid=$(cat "$work_dir/active.pid" 2>/dev/null || true)
+    case "$active_pid" in
+      *[!0-9]*|"") ;;
+      *)
+        printf "%s\n" leetfs | sudo -S -p "" kill -TERM -- "-$active_pid" 2>/dev/null || true
+        sleep 2
+        printf "%s\n" leetfs | sudo -S -p "" kill -KILL -- "-$active_pid" 2>/dev/null || true
+        ;;
+    esac
+  fi
   if [ -d "$work_dir/spec" ]; then
     find "$work_dir/spec" -type d -name mount -print 2>/dev/null | while read -r mount_dir; do
       mountpoint -q "$mount_dir" 2>/dev/null || continue
