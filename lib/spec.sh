@@ -116,6 +116,9 @@ spec_install_from_media() {
           \( -name 'tools-src*.tar' -o -name 'tools-src*.tar.gz' -o -name 'tools-src*.tar.xz' -o -name 'tools-src*.tgz' \) \
           -print 2>/dev/null | sort | head -1)"
         [ -n "$tools_archive" ] || return 9
+        rm -rf "$source_dir/tools"
+        mkdir -p "$tools_source/buildtools.log"
+        printf 'Extracting SPEC tools source: %s\n' "$(basename "$tools_archive")"
         tar -xf "$tools_archive" -C "$source_dir" || return 9
       fi
       [ -x "$tools_source/buildtools" ] || return 9

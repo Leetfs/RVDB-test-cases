@@ -15,7 +15,7 @@ run_cmd info vulkaninfo 5m 'command -v vulkaninfo && timeout 30s vulkaninfo --su
 run_cmd info clinfo 5m 'command -v clinfo && timeout 15s clinfo -l | grep -qi platform' 'clinfo';
 run_cmd info vainfo 2m 'command -v vainfo && timeout 15s vainfo' 'vainfo';
 run_cmd info vdpauinfo 2m 'command -v vdpauinfo && timeout 15s vdpauinfo' 'vdpauinfo';
-run_cmd info v4l2 2m 'command -v v4l2-ctl && for d in /dev/video*; do test -r "$d" && test -w "$d" && exit 0; done; exit 1' 'v4l2-ctl --list-devices; for d in /dev/video*; do test -r "$d" && test -w "$d" && v4l2-ctl -d "$d" --all; done';
+run_cmd info v4l2 2m 'command -v v4l2-ctl && find /dev -maxdepth 1 -name "video*" -readable -writable -print -quit | grep -q .' 'v4l2-ctl --list-devices; for d in /dev/video*; do test -r "$d" && test -w "$d" && v4l2-ctl -d "$d" --all; done';
 run_cmd info ffmpeg 2m 'command -v ffmpeg' 'ffmpeg -hide_banner -version; ffmpeg -hide_banner -encoders; ffmpeg -hide_banner -decoders';
 run_cmd info gstreamer 2m 'command -v gst-inspect-1.0' 'gst-inspect-1.0 --version; gst-inspect-1.0 | sed -n "1,240p"';
 printf 'LAVA_SYSTEM_INVENTORY_%s\n' DONE

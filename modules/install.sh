@@ -8,7 +8,10 @@ build_unixbench() {
 }
 
 build_lmbench() {
-  ensure_source lmbench 'find /opt/lmbench -name lat_syscall -type f -perm -111 -print -quit 2>/dev/null | grep -q .' 'git clone --depth 1 https://github.com/intel/lmbench.git "$SOURCE_ROOT/lmbench" && make -C "$SOURCE_ROOT/lmbench/src" -j "$(nproc)" && printf "%s\n" leetfs | sudo -S -p "" mkdir -p /opt/lmbench && printf "%s\n" leetfs | sudo -S -p "" cp -a "$SOURCE_ROOT/lmbench/." /opt/lmbench/'
+  if ! find /opt/lmbench -name lat_syscall -type f -perm -111 -print -quit 2>/dev/null | grep -q .; then
+    ensure_package lmbench-build-deps 'test -f /usr/include/tirpc/rpc/rpc.h' libtirpc-dev libtirpc-devel
+  fi
+  ensure_source lmbench 'find /opt/lmbench -name lat_syscall -type f -perm -111 -print -quit 2>/dev/null | grep -q .' 'git clone --depth 1 https://github.com/intel/lmbench.git "$SOURCE_ROOT/lmbench" && make -C "$SOURCE_ROOT/lmbench/src" -j "$(nproc)" CPPFLAGS="-I/usr/include/tirpc" LDLIBS="-ltirpc" && printf "%s\n" leetfs | sudo -S -p "" mkdir -p /opt/lmbench && printf "%s\n" leetfs | sudo -S -p "" cp -a "$SOURCE_ROOT/lmbench/." /opt/lmbench/'
 }
 
 if [ "$RUN_SPEC" -eq 1 ]; then
@@ -113,7 +116,7 @@ if has_module virt-kernel; then
   if [ "$RUN_LTP" -eq 1 ]; then
     ensure_package ltp-build-tools 'command -v autoreconf && command -v pkg-config && command -v bison && command -v flex' 'autoconf automake pkg-config bison flex m4' 'autoconf automake pkgconf-pkg-config bison flex m4'
     ensure_package ltp 'command -v runltp || test -x /opt/ltp/runltp' ltp-testsuite ltp
-    ensure_source ltp 'test -x /opt/ltp/runltp' 'git clone --depth 1 https://github.com/linux-test-project/ltp.git "$SOURCE_ROOT/ltp" && cd "$SOURCE_ROOT/ltp" && make autotools && ./configure --prefix=/opt/ltp && make -j "$(nproc)" && printf "%s\n" leetfs | sudo -S -p "" make install'
+    ensure_source ltp 'test -x /opt/ltp/runltp' 'git clone --depth 1 https://github.com/linux-test-project/ltp.git "$SOURCE_ROOT/ltp" && cd "$SOURCE_ROOT/ltp" && make autotools && ./configure --prefix=/opt/ltp --without-modules && make -j "$(nproc)" && printf "%s\n" leetfs | sudo -S -p "" make install'
   fi
 fi
 
