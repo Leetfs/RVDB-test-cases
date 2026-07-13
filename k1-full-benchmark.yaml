@@ -3,6 +3,10 @@ job_name: k1-01 full modular benchmark
 priority: medium
 visibility: public
 
+context:
+  lava_test_dir: /home/leetfs/lava-%s
+  lava_test_results_dir: /home/leetfs/lava-%s
+
 timeouts:
   job:
     hours: 24
