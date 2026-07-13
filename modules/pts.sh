@@ -18,10 +18,11 @@ if [ "$RUN_PTS" -eq 1 ] && [ -n "$PTS_TESTS" ]; then
     fi
     pts_result_name="lava-$RUN_ID-$pts_case"
     pts_json_file="$WORK_DIR/pts-json/$pts_case.json"
+    pts_metrics_file="$WORK_DIR/pts-json/$pts_case.tsv"
     run_cmd pts "$pts_case" "$PTS_TEST_TIMEOUT" 'command -v phoronix-test-suite' \
-      "env PTS_USER_PATH_OVERRIDE=\"$WORK_DIR/pts-user/\" PTS_TEST_INSTALL_ROOT_PATH=\"$WORK_DIR/pts-tests/\" FORCE_TIMES_TO_RUN=\"$PTS_TIMES_TO_RUN\" REMOVE_TESTS_ON_COMPLETION=1 TEST_RESULTS_NAME=\"$pts_result_name\" TEST_RESULTS_DESCRIPTION=\"LAVA Job $RUN_ID\" phoronix-test-suite default-benchmark $pts_test_quoted && env PTS_USER_PATH_OVERRIDE=\"$WORK_DIR/pts-user/\" OUTPUT_FILE=\"$pts_json_file\" phoronix-test-suite result-file-to-json \"$pts_result_name\""
+      "env PTS_USER_PATH_OVERRIDE=\"$WORK_DIR/pts-user/\" PTS_TEST_INSTALL_ROOT_PATH=\"$WORK_DIR/pts-tests/\" FORCE_TIMES_TO_RUN=\"$PTS_TIMES_TO_RUN\" REMOVE_TESTS_ON_COMPLETION=1 TEST_RESULTS_NAME=\"$pts_result_name\" TEST_RESULTS_DESCRIPTION=\"LAVA Job $RUN_ID\" phoronix-test-suite default-benchmark $pts_test_quoted && env PTS_USER_PATH_OVERRIDE=\"$WORK_DIR/pts-user/\" OUTPUT_FILE=\"$pts_json_file\" phoronix-test-suite result-file-to-json \"$pts_result_name\" && python3 \"$ROOT_DIR/scripts/pts-json-metrics.py\" \"$pts_json_file\" \"$pts_case\" > \"$pts_metrics_file\""
     if [ "$status" = PASS ]; then
-      report_pts_json "$pts_json_file" "$pts_case"
+      report_pts_metrics "$pts_metrics_file"
     fi
   done
 else

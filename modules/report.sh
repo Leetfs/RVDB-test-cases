@@ -7,4 +7,5 @@ echo;
 cat "$METRIC_REPORT";
 echo LAVA_K1_BENCHMARK_REPORT_END;
 printf 'Report: %s\nMetrics: %s\nDetail: %s\nSuite results: %s\n' "$REPORT" "$METRIC_REPORT" "$DETAIL" "$SUITE_RESULTS";
+printf 'LAVA Results 上报失败：%s\n' "$RESULT_SUBMIT_FAILURES";
 printf 'LAVA_BENCHMARK_REPORT_%s\n' DONE

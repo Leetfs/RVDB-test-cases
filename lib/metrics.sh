@@ -16,7 +16,7 @@ emit_metric() {
   [ -n "$metric_id" ] || return 0
   printf '| %s-%s | %s | %s | %s |\n' "$category" "$test_name" "$metric_name" "$value" "$units" >> "$METRIC_REPORT"
   printf 'LAVA_METRIC %s value=%s units=%s\n' "$metric_id" "$value" "$units" | tee -a "$DETAIL" "$SUITE_RESULTS"
-  lava-test-case "$metric_id" --result pass --measurement "$value" --units "$units"
+  lava_result "$metric_id" --result pass --measurement "$value" --units "$units"
 }
 
 emit_metric_lines() {

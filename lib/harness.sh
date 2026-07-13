@@ -33,12 +33,28 @@ PASS_COUNT=0;
 FAIL_COUNT=0;
 SKIP_COUNT=0;
 TIMEOUT_COUNT=0;
+RESULT_SUBMIT_FAILURES=0;
 : > "$DETAIL";
 : > "$INSTALL_REPORT";
 : > "$SUITE_RESULTS";
 printf '# K1 LAVA 基准测试报告\n\n' > "$REPORT";
 printf -- '- Started: %s\n- Host: %s\n- Kernel: %s\n\n' "$(date -Is)" "$(hostname)" "$(uname -a)" >> "$REPORT";
 printf '## 依赖安装记录\n\n| 工具 | 状态 | 详情 |\n|---|---:|---|\n' >> "$INSTALL_REPORT";
+lava_result() {
+  result_case="$1"
+  attempt=1
+  while [ "$attempt" -le 3 ]; do
+    if lava-test-case "$@"; then
+      return 0
+    fi
+    printf 'LAVA_RESULT_RETRY case=%s attempt=%s\n' "$result_case" "$attempt" | tee -a "$DETAIL" >&2
+    attempt=$((attempt + 1))
+    sleep 1
+  done
+  RESULT_SUBMIT_FAILURES=$((RESULT_SUBMIT_FAILURES + 1))
+  printf 'LAVA_RESULT_SUBMIT_FAILED case=%s\n' "$result_case" | tee -a "$DETAIL" "$SUITE_RESULTS" >&2
+  return 1
+};
 suite_result() {
   case_id="$(printf '%s-%s' "$1" "$2" | tr '[:upper:]_' '[:lower:]-' | tr -cd 'a-z0-9.-')";
   case "$3" in
@@ -48,7 +64,7 @@ suite_result() {
     *) lava_status=unknown ;;
   esac;
   printf 'LAVA_RESULT %s %s %s seconds rc=%s\n' "$case_id" "$3" "$4" "$5" >> "$SUITE_RESULTS";
-  lava-test-case "$case_id" --result "$lava_status" --measurement "$4" --units seconds;
+  lava_result "$case_id" --result "$lava_status" --measurement "$4" --units seconds;
 };
 run_cmd() {
   category="$1";

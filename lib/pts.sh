@@ -51,41 +51,12 @@ resolve_pts_tests() {
   printf 'PTS selection: tier=%s groups=%s tests=%s\n' "$PTS_TIER" "$PTS_GROUPS" "$(printf '%s\n' "$PTS_TESTS" | wc -w | tr -d ' ')" | tee -a "$DETAIL"
 }
 
-report_pts_json() {
-  json_file="$1"
-  profile_name="$2"
-  [ -s "$json_file" ] || return 0
-
-  python3 - "$json_file" "$profile_name" <<'PY' | while IFS=$'\t' read -r metric_name metric_value metric_units; do
-import json
-import re
-import sys
-
-path, profile = sys.argv[1:]
-with open(path, encoding="utf-8") as stream:
-    document = json.load(stream)
-
-used = set()
-for result in document.get("results", {}).values():
-    description = result.get("description") or result.get("title") or "result"
-    slug = re.sub(r"[^a-z0-9]+", "-", description.lower()).strip("-")[:48] or "result"
-    for value_entry in result.get("results", {}).values():
-        value = value_entry.get("value")
-        if not isinstance(value, (int, float)):
-            continue
-        base = f"pts-{profile}-{slug}"[:90].rstrip("-")
-        name = base
-        suffix = 2
-        while name in used:
-            tail = f"-{suffix}"
-            name = base[: 90 - len(tail)].rstrip("-") + tail
-            suffix += 1
-        used.add(name)
-        units = re.sub(r"[^a-zA-Z0-9%./_-]+", "-", result.get("scale") or "score").strip("-") or "score"
-        print(name, value, units, sep="\t")
-PY
+report_pts_metrics() {
+  metrics_file="$1"
+  [ -s "$metrics_file" ] || return 1
+  while IFS=$'\t' read -r metric_name metric_value metric_units; do
     [ -n "$metric_name" ] || continue
     printf 'LAVA_PTS_METRIC %s=%s %s\n' "$metric_name" "$metric_value" "$metric_units" | tee -a "$DETAIL"
-    lava-test-case "$metric_name" --result pass --measurement "$metric_value" --units "$metric_units"
-  done
+    lava_result "$metric_name" --result pass --measurement "$metric_value" --units "$metric_units"
+  done < "$metrics_file"
 }
