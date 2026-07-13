@@ -125,6 +125,26 @@ parse_spec2017() {
   awk '/SPEC(rate|speed)2017_(int|fp)_(base|peak)/ { for (i=NF; i>=1; i--) if ($i ~ /^[0-9]+([.][0-9]+)?$/) { name=$1; print name "|" $i "|ratio"; break } }' "$1" | tail -20
 }
 
+parse_iperf3() {
+  awk '/receiver/ && /bits\/sec/ { for (i=1; i<=NF; i++) if ($i ~ /^[0-9]+([.][0-9]+)?$/ && $(i+1) ~ /bits\/sec/) { print "receive-bandwidth|" $i "|" $(i+1); line=1 } } END { if (!line) exit 0 }' "$1" | tail -1
+}
+
+parse_sockperf() {
+  awk 'tolower($0) ~ /latency.*[0-9].*(usec|msec|nsec)/ { if (match($0, /[0-9]+([.][0-9]+)?/)) { value=substr($0,RSTART,RLENGTH); unit="microseconds"; if (tolower($0) ~ /msec/) unit="milliseconds"; else if (tolower($0) ~ /nsec/) unit="nanoseconds"; print "latency|" value "|" unit } }' "$1" | tail -1
+}
+
+parse_qperf() {
+  awk -F= '/(bw|latency)[[:space:]]*=/ { name=$1; gsub(/^[[:space:]]+|[[:space:]]+$/, "", name); value=$2; gsub(/^[[:space:]]+/, "", value); split(value,f,/[[:space:]]+/); if (f[1] ~ /^[0-9]+([.][0-9]+)?$/) print name "|" f[1] "|" f[2] }' "$1"
+}
+
+parse_cyclictest() {
+  awk '/Max:/ { for (i=1; i<=NF; i++) if ($i == "Max:" && $(i+1) ~ /^[0-9]+$/) { if ($(i+1) > max) max=$(i+1) } } END { if (max != "") print "maximum-latency|" max "|microseconds" }' "$1"
+}
+
+parse_hackbench() {
+  awk -F: '/Total time/ { value=$2; gsub(/[^0-9.]/, "", value); if (value ~ /^[0-9]+([.][0-9]+)?$/) print "total-time|" value "|seconds" }' "$1" | tail -1
+}
+
 collect_metrics() {
   category="$1"
   test_name="$2"
@@ -151,6 +171,11 @@ collect_metrics() {
     storage-iozone) parse_iozone "$output_file" ;;
     stability-thermal-*) parse_thermal "$output_file" ;;
     stability-stress-ng) parse_stress_ng "$output_file" ;;
+    network-iperf3-loopback) parse_iperf3 "$output_file" ;;
+    network-sockperf-loopback) parse_sockperf "$output_file" ;;
+    network-qperf-loopback) parse_qperf "$output_file" ;;
+    realtime-cyclictest) parse_cyclictest "$output_file" ;;
+    realtime-hackbench) parse_hackbench "$output_file" ;;
     *) return 0 ;;
   esac | emit_metric_lines "$category" "$test_name"
 }

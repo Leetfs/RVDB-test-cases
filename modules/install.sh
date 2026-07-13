@@ -46,6 +46,98 @@ if has_module info; then
   ensure_source gstreamer 'command -v gst-inspect-1.0' 'git clone --depth 1 https://gitlab.freedesktop.org/gstreamer/gstreamer.git "$SOURCE_ROOT/gstreamer" && meson setup "$SOURCE_ROOT/gstreamer/build" "$SOURCE_ROOT/gstreamer" && meson compile -C "$SOURCE_ROOT/gstreamer/build" && printf "%s\n" leetfs | sudo -S -p "" meson install -C "$SOURCE_ROOT/gstreamer/build"'
 fi
 
+if has_module distro; then
+  ensure_package distro-tools 'command -v findmnt && command -v unshare && command -v locale' 'util-linux locales' 'util-linux glibc-langpack-en'
+  ensure_package proc-tools 'command -v sysctl' procps procps-ng
+fi
+
+if has_module toolchain && [ "$RUN_TOOLCHAINS" -eq 1 ]; then
+  ensure_package cpp-toolchain 'command -v g++ && command -v gfortran' 'g++ gfortran' 'gcc-c++ gcc-gfortran'
+  ensure_package clang 'command -v clang' clang clang
+  ensure_package rust 'command -v rustc && command -v cargo' 'rustc cargo' 'rust cargo'
+  ensure_package golang 'command -v go' golang-go golang
+  ensure_package java 'command -v javac && command -v java' default-jdk-headless java-17-openjdk-devel
+  ensure_package nodejs 'command -v node' nodejs nodejs
+  ensure_package perl-modules 'perl -MJSON::PP -MDigest::SHA -e 1' perl perl
+  ensure_package php-runtime 'command -v php' php-cli php-cli
+fi
+
+if has_module network && [ "$RUN_NETWORK" -eq 1 ]; then
+  ensure_package iproute 'command -v ip' iproute2 iproute
+  ensure_package ping 'command -v ping' iputils-ping iputils
+  ensure_package ethtool 'command -v ethtool' ethtool ethtool
+  ensure_package iperf3 'command -v iperf3' iperf3 iperf3
+  ensure_package netperf 'command -v netperf && command -v netserver' netperf netperf
+  ensure_package sockperf 'command -v sockperf' sockperf sockperf
+  ensure_package qperf 'command -v qperf' qperf qperf
+  ensure_source netperf 'command -v netperf && command -v netserver' 'git clone --depth 1 https://github.com/HewlettPackard/netperf.git "$SOURCE_ROOT/netperf" && cd "$SOURCE_ROOT/netperf" && ./autogen.sh && ./configure && make -j "$(nproc)" && printf "%s\n" leetfs | sudo -S -p "" make install'
+  ensure_source sockperf 'command -v sockperf' 'git clone --depth 1 https://github.com/Mellanox/sockperf.git "$SOURCE_ROOT/sockperf" && cd "$SOURCE_ROOT/sockperf" && ./autogen.sh && ./configure && make -j "$(nproc)" && printf "%s\n" leetfs | sudo -S -p "" make install'
+  ensure_source qperf 'command -v qperf' 'git clone --depth 1 https://github.com/linux-rdma/qperf.git "$SOURCE_ROOT/qperf" && cd "$SOURCE_ROOT/qperf" && ./autogen.sh && ./configure && make -j "$(nproc)" && printf "%s\n" leetfs | sudo -S -p "" make install'
+fi
+
+if has_module container && [ "$RUN_CONTAINERS" -eq 1 ]; then
+  ensure_package podman 'command -v podman' podman podman
+  ensure_package runc 'command -v runc' runc runc
+  ensure_package crun 'command -v crun' crun crun
+  ensure_package containerd 'command -v containerd && command -v ctr' containerd containerd
+  ensure_package docker 'command -v docker' docker.io moby-engine
+  ensure_source runc 'command -v runc' 'git clone --depth 1 https://github.com/opencontainers/runc.git "$SOURCE_ROOT/runc" && make -C "$SOURCE_ROOT/runc" -j "$(nproc)" && printf "%s\n" leetfs | sudo -S -p "" install -m 0755 "$SOURCE_ROOT/runc/runc" /usr/local/bin/runc' 4h
+  ensure_source crun 'command -v crun' 'git clone --depth 1 https://github.com/containers/crun.git "$SOURCE_ROOT/crun" && cd "$SOURCE_ROOT/crun" && ./autogen.sh && ./configure && make -j "$(nproc)" && printf "%s\n" leetfs | sudo -S -p "" make install' 4h
+  ensure_source containerd 'command -v containerd && command -v ctr' 'git clone --depth 1 https://github.com/containerd/containerd.git "$SOURCE_ROOT/containerd" && make -C "$SOURCE_ROOT/containerd" -j "$(nproc)" && printf "%s\n" leetfs | sudo -S -p "" install -m 0755 "$SOURCE_ROOT/containerd/bin/containerd" "$SOURCE_ROOT/containerd/bin/ctr" /usr/local/bin/' 4h
+  ensure_source podman 'command -v podman' 'git clone --depth 1 https://github.com/containers/podman.git "$SOURCE_ROOT/podman" && make -C "$SOURCE_ROOT/podman" -j "$(nproc)" BUILDTAGS="" && printf "%s\n" leetfs | sudo -S -p "" make -C "$SOURCE_ROOT/podman" install PREFIX=/usr/local' 6h
+fi
+
+if has_module security && [ "$RUN_SECURITY" -eq 1 ]; then
+  ensure_package capabilities 'command -v capsh' libcap2-bin libcap
+  ensure_package audit 'command -v auditctl' auditd audit
+  ensure_package checksec 'command -v checksec' checksec checksec
+  ensure_package lynis 'command -v lynis' lynis lynis
+  ensure_package openscap 'command -v oscap' openscap-scanner openscap-scanner
+  ensure_source checksec 'command -v checksec' 'git clone --depth 1 https://github.com/slimm609/checksec.sh.git "$SOURCE_ROOT/checksec" && printf "%s\n" leetfs | sudo -S -p "" install -m 0755 "$SOURCE_ROOT/checksec/checksec" /usr/local/bin/checksec'
+  ensure_source lynis 'command -v lynis' 'git clone --depth 1 https://github.com/CISOfy/lynis.git "$SOURCE_ROOT/lynis" && printf "%s\n" leetfs | sudo -S -p "" mkdir -p /opt/lynis && printf "%s\n" leetfs | sudo -S -p "" cp -a "$SOURCE_ROOT/lynis/." /opt/lynis/ && printf "%s\n" leetfs | sudo -S -p "" ln -sf /opt/lynis/lynis /usr/local/bin/lynis'
+  ensure_source openscap 'command -v oscap' 'git clone --depth 1 https://github.com/OpenSCAP/openscap.git "$SOURCE_ROOT/openscap" && cmake -S "$SOURCE_ROOT/openscap" -B "$SOURCE_ROOT/openscap/build" -DCMAKE_BUILD_TYPE=Release -DENABLE_PYTHON3=OFF -DENABLE_TESTS=OFF && cmake --build "$SOURCE_ROOT/openscap/build" -j "$(nproc)" && printf "%s\n" leetfs | sudo -S -p "" cmake --install "$SOURCE_ROOT/openscap/build"' 4h
+fi
+
+if has_module realtime && [ "$RUN_REALTIME" -eq 1 ]; then
+  ensure_package rt-tests 'command -v cyclictest && command -v oslat' rt-tests rt-tests
+  ensure_package perf 'command -v perf' linux-perf perf
+  ensure_source rt-tests 'command -v cyclictest && command -v oslat' 'git clone --depth 1 https://git.kernel.org/pub/scm/utils/rt-tests/rt-tests.git "$SOURCE_ROOT/rt-tests" && make -C "$SOURCE_ROOT/rt-tests" -j "$(nproc)" && printf "%s\n" leetfs | sudo -S -p "" make -C "$SOURCE_ROOT/rt-tests" install' 2h
+fi
+
+if has_module multimedia && [ "$RUN_MULTIMEDIA" -eq 1 ]; then
+  ensure_package multimedia-tools 'command -v ffmpeg && command -v gst-launch-1.0 && command -v v4l2-compliance' 'ffmpeg gstreamer1.0-tools gstreamer1.0-plugins-base gstreamer1.0-plugins-good v4l-utils' 'ffmpeg gstreamer1 gstreamer1-plugins-base gstreamer1-plugins-good v4l-utils'
+fi
+
+if has_module filesystem && [ "$RUN_FILESYSTEM" -eq 1 ]; then
+  ensure_package filesystem-tools 'command -v xfs_io && command -v getfacl && command -v setfattr' 'xfsprogs acl attr' 'xfsprogs acl attr'
+  ensure_package xfstests-build-deps 'test -f /usr/include/libaio.h && test -f /usr/include/uuid/uuid.h && command -v prove' 'libaio-dev uuid-dev libcap-dev libgdbm-dev e2fsprogs perl' 'libaio-devel libuuid-devel libcap-devel gdbm-devel e2fsprogs perl'
+  ensure_package pjdfstest 'command -v pjdfstest' pjdfstest pjdfstest
+  ensure_source xfstests 'test -x /opt/xfstests/check && test -x /opt/xfstests/src/fsx' 'git clone --depth 1 https://git.kernel.org/pub/scm/fs/xfs/xfstests-dev.git "$SOURCE_ROOT/xfstests" && make -C "$SOURCE_ROOT/xfstests" -j "$(nproc)" && printf "%s\n" leetfs | sudo -S -p "" mkdir -p /opt/xfstests && printf "%s\n" leetfs | sudo -S -p "" cp -a "$SOURCE_ROOT/xfstests/." /opt/xfstests/' 4h
+  ensure_source pjdfstest 'test -d /opt/pjdfstest/tests' 'git clone --depth 1 https://github.com/pjd/pjdfstest.git "$SOURCE_ROOT/pjdfstest" && make -C "$SOURCE_ROOT/pjdfstest" && printf "%s\n" leetfs | sudo -S -p "" mkdir -p /opt/pjdfstest && printf "%s\n" leetfs | sudo -S -p "" cp -a "$SOURCE_ROOT/pjdfstest/." /opt/pjdfstest/'
+  if [ "$RUN_DESTRUCTIVE" -eq 1 ] && [ -n "$BLKTESTS_DEVICES" ]; then
+    ensure_source blktests 'test -x /opt/blktests/check' 'git clone --depth 1 https://github.com/osandov/blktests.git "$SOURCE_ROOT/blktests" && printf "%s\n" leetfs | sudo -S -p "" mkdir -p /opt/blktests && printf "%s\n" leetfs | sudo -S -p "" cp -a "$SOURCE_ROOT/blktests/." /opt/blktests/'
+  fi
+fi
+
+if has_module kernel-extra && [ "$RUN_KSELFTEST" -eq 1 ]; then
+  ensure_package kselftest-build-deps 'command -v flex && command -v bison && test -f /usr/include/elf.h' 'flex bison libelf-dev libssl-dev libcap-dev liburing-dev' 'flex bison elfutils-libelf-devel openssl-devel libcap-devel liburing-devel'
+  ensure_source kselftest 'test -x /opt/kselftest/run_kselftest.sh' 'git clone --depth 1 https://git.kernel.org/pub/scm/linux/kernel/git/stable/linux.git "$SOURCE_ROOT/linux" && make -C "$SOURCE_ROOT/linux" headers && make -C "$SOURCE_ROOT/linux/tools/testing/selftests" -j "$(nproc)" TARGETS="'$KSELFTEST_COLLECTIONS'" && printf "%s\n" leetfs | sudo -S -p "" make -C "$SOURCE_ROOT/linux/tools/testing/selftests" TARGETS="'$KSELFTEST_COLLECTIONS'" install INSTALL_PATH=/opt/kselftest' 8h
+  ensure_package bpftool 'command -v bpftool' bpftool bpftool
+  ensure_package perf 'command -v perf' linux-perf perf
+fi
+
+if has_module graphics-cts && [ "$RUN_GRAPHICS_CTS" -eq 1 ]; then
+  ensure_package graphics-cts-build-deps 'test -f /usr/include/CL/cl.h && command -v pkg-config && command -v spirv-as' 'ocl-icd-opencl-dev opencl-headers spirv-headers spirv-tools libdrm-dev libgbm-dev libegl1-mesa-dev libgles2-mesa-dev' 'ocl-icd-devel opencl-headers spirv-headers spirv-tools libdrm-devel mesa-libgbm-devel mesa-libEGL-devel mesa-libGLES-devel'
+  ensure_package drm-tests 'command -v modetest' libdrm-tests libdrm-tests
+  ensure_package piglit 'command -v piglit' piglit piglit
+  ensure_package deqp 'command -v deqp-gles2 && command -v deqp-vk' 'deqp deqp-vk' 'deqp deqp-vk'
+  ensure_package opencl-cts 'command -v test_basic' opencl-cts opencl-cts
+  ensure_source piglit 'command -v piglit' 'git clone --depth 1 https://gitlab.freedesktop.org/mesa/piglit.git "$SOURCE_ROOT/piglit" && meson setup "$SOURCE_ROOT/piglit/build" "$SOURCE_ROOT/piglit" && meson compile -C "$SOURCE_ROOT/piglit/build" && printf "%s\n" leetfs | sudo -S -p "" meson install -C "$SOURCE_ROOT/piglit/build"' 8h
+  ensure_source modetest 'command -v modetest' 'git clone --depth 1 https://gitlab.freedesktop.org/mesa/drm.git "$SOURCE_ROOT/libdrm" && meson setup "$SOURCE_ROOT/libdrm/build" "$SOURCE_ROOT/libdrm" -Dinstall-test-programs=true && meson compile -C "$SOURCE_ROOT/libdrm/build" && printf "%s\n" leetfs | sudo -S -p "" meson install -C "$SOURCE_ROOT/libdrm/build"' 4h
+  ensure_source deqp 'command -v deqp-gles2 && command -v deqp-vk' 'git clone --depth 1 https://github.com/KhronosGroup/VK-GL-CTS.git "$SOURCE_ROOT/vk-gl-cts" && cd "$SOURCE_ROOT/vk-gl-cts" && python3 external/fetch_sources.py && cmake -S . -B build -DDEQP_TARGET=surfaceless -DCMAKE_BUILD_TYPE=Release && cmake --build build -j "$(nproc)" --target deqp-gles2 deqp-vk && printf "%s\n" leetfs | sudo -S -p "" install -m 0755 build/modules/gles2/deqp-gles2 build/external/vulkancts/modules/vulkan/deqp-vk /usr/local/bin/' 12h
+  ensure_source opencl-cts 'command -v test_basic' 'git clone --depth 1 https://github.com/KhronosGroup/OpenCL-CTS.git "$SOURCE_ROOT/opencl-cts" && libdir=$(pkg-config --variable=libdir OpenCL) && cmake -S "$SOURCE_ROOT/opencl-cts" -B "$SOURCE_ROOT/opencl-cts/build" -DCL_INCLUDE_DIR=/usr/include -DSPIRV_INCLUDE_DIR=/usr/include -DCL_LIB_DIR="$libdir" -DSPIRV_TOOLS_DIR=/usr/bin -DOPENCL_LIBRARIES=OpenCL -DCMAKE_BUILD_TYPE=Release && cmake --build "$SOURCE_ROOT/opencl-cts/build" -j "$(nproc)" --target test_basic && bin=$(find "$SOURCE_ROOT/opencl-cts/build" -type f -name test_basic -perm -111 -print -quit) && printf "%s\n" leetfs | sudo -S -p "" install -m 0755 "$bin" /usr/local/bin/test_basic' 12h
+fi
+
 if has_module cpu; then
   ensure_package 7zip 'command -v 7z || command -v 7zz' p7zip-full 'p7zip p7zip-plugins'
   ensure_package stockfish 'command -v stockfish || test -x /usr/games/stockfish' stockfish stockfish

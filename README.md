@@ -1,6 +1,7 @@
-# RVDB K1 LAVA 测试用例
+# RVDB Linux 发行版 LAVA 测试用例
 
-本仓库提供面向 K1 RISC-V 开发板的模块化 LAVA 测试套件。只需向 LAVA
+本仓库提供面向多架构 Linux 发行版和开发板的模块化 LAVA 测试套件，K1 是
+当前参考设备。只需向 LAVA
 提交一个主 Job，LAVA dispatcher 会通过官方的
 `test.definitions.from: git` 机制获取本仓库，并按照 Lava-Test Test
 Definition 1.0 规范执行全部测试模块。
@@ -18,6 +19,7 @@ Definition 1.0 规范执行全部测试模块。
 - `lib/harness.sh`：超时、依赖安装、报告和 LAVA 结果上报框架。
 - `lib/spec.sh`：SPEC CPU 2017 探测、下载、校验、安装和初始化逻辑。
 - `modules/*.sh`：按测试领域拆分的独立模块。
+- `docs/coverage.md`：全部测试领域、开源框架和安全边界清单。
 
 ## Git 仓库
 
@@ -46,7 +48,8 @@ bash ../scripts/run-profile.sh full
 `full` 方案依次执行：
 
 ```text
-info cpu memory gpu combined pts storage virt-kernel stability
+info distro toolchain cpu memory gpu graphics-cts multimedia network filesystem
+container security realtime kernel-extra combined pts storage virt-kernel stability
 ```
 
 也可以在仓库检出目录中手动执行某个方案：
@@ -77,6 +80,32 @@ bash scripts/run-profile.sh cpu
 `sbc-bench` 使用 root 和 `MODE=unattended` 运行，不读取“建议重启”的交互确认，
 因此适合无人值守 Job。
 
+## 扩展覆盖
+
+`full` 当前包含 19 个模块、114 个非 PTS 测试入口和 72 个 PTS profile，基础
+testcase 规模约 186 项；kselftest、LTP、KUnit、xfstests、Piglit 和 Khronos CTS
+等框架还会在内部产生更多子用例。详细矩阵见 `docs/coverage.md`。
+
+除原有性能测试外，现已覆盖：
+
+- 发行版健康：包数据库、动态链接器、systemd、locale、时区、挂载和 cgroup。
+- 工具链/运行时：GCC C/C++/Fortran/OpenMP、Clang、Rust、Go、Python、Perl、
+  Java、Node.js、PHP。
+- 内核：kselftest、KUnit、LTP、perf bench、BPF feature probe、KVM unit tests。
+- 网络：IPv4/IPv6、network namespace/veth、iperf3、netperf、sockperf、qperf、
+  ethtool。
+- 文件系统/块设备：tmpfs、OverlayFS、fsx、pjdfstest、xfstests、blktests。
+- 容器：user namespace、runc、crun、containerd、Podman、Docker。
+- 安全：seccomp、capabilities、LSM、audit、checksec、Lynis、OpenSCAP。
+- 实时性：cyclictest、hackbench、oslat、hwlatdetect。
+- 多媒体：FFmpeg H.264/HEVC、GStreamer 音视频、v4l2-compliance。
+- 图形一致性：DRM modetest、Piglit、OpenGL ES CTS、Vulkan CTS、OpenCL CTS。
+
+默认不执行可能破坏数据或耗时极长的测试。xfstests/blktests 必须设置
+`RUN_DESTRUCTIVE=1` 并提供专用测试设备；完整图形 CTS 需设置
+`RUN_GRAPHICS_CTS=1`；OpenSCAP 需要显式提供内容和 profile。所有临时挂载、
+网络 namespace、容器存储和生成文件均位于本次 Job 工作目录并带清理逻辑。
+
 ## Phoronix Test Suite
 
 `pts` 是独立模块，面向多架构 Linux 发行版验证。测试目录按 CPU、密码学、
@@ -86,13 +115,13 @@ bash scripts/run-profile.sh cpu
 通过 `PTS_TIER` 选择运行深度：
 
 - `smoke`：11 项，适合每次构建后的快速冒烟测试。
-- `standard`：49 项，默认值，覆盖常见发行版性能与功能场景。
-- `extended`：72 项，增加 LLVM/Mesa/PHP/Python 编译、HPC、数据库和网络等长测。
+- `standard`：49 项，覆盖常见发行版性能与功能场景。
+- `extended`：72 项，默认值，增加 LLVM/Mesa/PHP/Python 编译、HPC、数据库和网络等长测。
 
 默认配置为：
 
 ```env
-PTS_TIER=standard
+PTS_TIER=extended
 PTS_GROUPS='cpu crypto compression memory storage toolchain runtime multimedia server kernel network'
 PTS_TESTS=
 PTS_TIMES_TO_RUN=1

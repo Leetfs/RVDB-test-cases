@@ -8,11 +8,11 @@ context:
 
 timeouts:
   job:
-    hours: 48
+    hours: 72
   action:
-    hours: 48
+    hours: 72
   connection:
-    hours: 24
+    hours: 72
 
 actions:
   - deploy:
@@ -39,7 +39,7 @@ actions:
 
   - test:
       timeout:
-        hours: 48
+        hours: 72
       definitions:
         - repository: https://github.com/Leetfs/RVDB-test-cases.git
           from: git

@@ -2,6 +2,7 @@
 set -o pipefail
 
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+export ROOT_DIR
 PROFILE="${1:-full}"
 PROFILE_FILE="$ROOT_DIR/profiles/$PROFILE.env"
 
@@ -23,6 +24,7 @@ source "$ROOT_DIR/lib/cleanup.sh"
 # shellcheck source=/dev/null
 source "$ROOT_DIR/lib/harness.sh"
 source "$ROOT_DIR/lib/metrics.sh"
+source "$ROOT_DIR/lib/tap.sh"
 source "$ROOT_DIR/lib/spec.sh"
 source "$ROOT_DIR/lib/pts.sh"
 resolve_pts_tests || exit $?
