@@ -1,0 +1,13 @@
+schema_version: "1.0"
+generated_by: rvdb-web
+source_of_truth:
+  profiles: profiles/*.env
+  modules: modules/*.sh
+  defaults: config/defaults.env
+selection_parameters:
+  modules: RVDB_SELECTED_MODULES
+  tests: RVDB_SELECTED_TESTS
+notes:
+  - 平台同步时从源文件自动发现模块、测试入口和默认环境变量。
+  - 本文件只定义机器接口，不复制测试清单；测试清单仍由仓库源文件生成。
+  - 未传入选择参数时保持现有 profile 行为。

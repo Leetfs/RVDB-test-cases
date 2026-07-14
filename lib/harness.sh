@@ -93,6 +93,12 @@ run_cmd() {
   limit="$3";
   probe="$4";
   command_text="$5";
+  if [ -n "${RVDB_SELECTED_TESTS:-}" ]; then
+    case " $RVDB_SELECTED_TESTS " in
+      *" $test_name "*) ;;
+      *) record_skip "$category" "$test_name" 'not selected by RVDB Web'; return 0 ;;
+    esac;
+  fi;
   output_id="$(printf '%s-%s' "$category" "$test_name" | tr -cd 'a-zA-Z0-9._-')";
   output_file="$WORK_DIR/output-$output_id.log";
   : > "$output_file";

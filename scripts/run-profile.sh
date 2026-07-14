@@ -5,6 +5,7 @@ ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 export ROOT_DIR
 PROFILE="${1:-full}"
 PROFILE_FILE="$ROOT_DIR/profiles/$PROFILE.env"
+RVDB_REQUESTED_MODULES="${RVDB_SELECTED_MODULES:-}"
 
 if [[ ! -r "$PROFILE_FILE" ]]; then
   printf 'Unknown profile: %s\n' "$PROFILE" >&2
@@ -15,6 +16,12 @@ fi
 source "$ROOT_DIR/config/defaults.env"
 # shellcheck source=/dev/null
 source "$PROFILE_FILE"
+
+# Web 平台通过 LAVA test definition parameters 传入模块列表。默认仍使用 profile，
+# 因此现有手工提交模板的行为不变。
+if [[ -n "$RVDB_REQUESTED_MODULES" ]]; then
+  PROFILE_MODULES="$RVDB_REQUESTED_MODULES"
+fi
 
 : "${PROFILE_MODULES:?PROFILE_MODULES is required in $PROFILE_FILE}"
 SELECTED_MODULES="$(tr ' ' ',' <<<"$PROFILE_MODULES")"
